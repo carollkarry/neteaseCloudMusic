@@ -1,78 +1,91 @@
 <template>
-<!--  <div class="father">-->
-<!--    <h2>父组件</h2>-->
-<!--    &lt;!&ndash; 01.基本使用 &ndash;&gt;-->
-<!--    <son info="你好吗hhh?" skill="不,我不好" food="吃西兰花可以平复心情哦"></son>-->
-<!--  </div>-->
-<!--  <div>-->
-<!--    &lt;!&ndash; emit基本使用 &ndash;&gt;-->
-<!--    <h2>你点了:{{ num }} 次</h2>-->
-
-<!--    <son @add="fatherAdd"></son>-->
-<!--  </div>-->
-<!--  <div>-->
-
-<!--      <el-button type="primary" @click='add()'>添加</el-button>-->
-<!--    <dialog ref="gds"/>-->
-<!--  </div>-->
-  <Child1 ref="myChild" />
-  <el-button @click="add" @children="parentGoods">调用子组件方法</el-button>
-
-  <div>
-    <ul v-for="item in products" :key="item.id" class="product-ul">
-      <li>商品名称：{{item.name}}</li>
-      <li>商品价格：{{item.price | filterPrice}}</li>
-      <li>商品详情：<a v-bind:href="item.detail | filterURL">查看详情</a></li>
-    </ul>
+  <div class="main-div">
+    <div class="main-box">
+      <div :class="['container', 'container-register', { 'is-txl': isLogin }]">
+        <el-form :rules="baseRules"
+                 ref="registerForm"
+                 :model="registerForm">
+          <h2 class="title">Create Account</h2>
+          <input class="form__input" type="text" placeholder="Name" v-model="registerForm.nickname" />
+          <input class="form__input" type="text" placeholder="Phone" v-model="registerForm.phone"/>
+          <div class="from__input__div">
+            <input class="form__input1" type="password" placeholder="Captcha" v-model="registerForm.captcha">
+            <el-button class="form__input2" type="primary" @click="getCaptcha" :disabled="captchaBtn" v-if="showBtn">获取验证码</el-button>
+            <el-button class="form__input2" plain disabled v-else>{{codeMsg}}</el-button>
+          </div>
+          <input  class="form__input" type="password" placeholder="Password" v-model="registerForm.password"/>
+          <div class="primary-btn">立即注册</div>
+        </el-form>
+      </div>
+      <div
+          :class="['container', 'container-login', { 'is-txl is-z200': isLogin }]"
+      >
+        <form>
+          <h2 class="title">Sign in to Website</h2>
+          <span class="text">or use phone for registration</span>
+          <input class="form__input" type="text" placeholder="Email" />
+          <input class="form__input" type="password" placeholder="Password" />
+          <div class="primary-btn">立即登录</div>
+        </form>
+      </div>
+      <div :class="['switch', { login: isLogin }]">
+        <div class="switch__circle"></div>
+        <div class="switch__circle switch__circle_top"></div>
+        <div class="switch__container">
+          <h2>{{ isLogin ? 'Hello Friend !' : 'Welcome Back !' }}</h2>
+          <p>
+            {{
+              isLogin
+                  ? 'Enter your personal details and start journey with us'
+                  : 'To keep connected with us please login with your personal info'
+            }}
+          </p>
+          <div class="primary-btn" @click="isLogin = !isLogin">
+            {{ isLogin ? '立即注册' : '立即登录' }}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-
-
 </template>
 
 <script>
-import son from '@/components/son'
 import HelloWorld from "@/components/HelloWorld";
 import atest from "@/views/atest";
 import Atest from "@/views/atest";
 import {byCode, sendCaptcha} from "@/plugins/loginbyPhone";
-import dialog from "@/components/dialog";
-import Child1 from "@/components/Child1";
 export default {
   name: 'HomeView',
-
   data() {
     return {
-      products: [
-        { name: 'cpu', price: 25, detail: 'cpu' },
-        { name: '硬盘', price: '', detail: 'ying' }
-      ],
-      user:{ name:"nanmo" },
-      num:0,
-      books: [
-        { id: 1000, name: 'Linux编程之美', price: 60 },
-        { id: 1001, name: 'Java疯狂讲义', price: 60 },
-        { id: 1002, name: '深入理解计算机原理', price: 80 },
-        { id: 1003, name: '操作系统', price: 30 },
-        { id: 1004, name: '数据结构导论', price: 60 },
-      ]
+      isLogin: false,
+      loginForm: {
+        email: '',
+        password: '',
+      },
+      registerForm: {
+        phone: '',
+        password: '',
+        captcha: '',
+        nickname: ''
+      },
+      captchaBtn:true,//获取验证码的按钮是否禁用
+      showBtn:true,//获取验证码按钮是否展示
+      codeMsg:'获取验证码',
+      //倒计时
+      codeSec:60,
+      baseRules: {
+        phone:[{ required: true, message: '请输入号码', trigger: 'blur' },
+          { pattern: /^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/, message: '号码格式错误', trigger: 'blur' }],
+        password: [{ required: true, message: '请输入密码', trigger: 'blur' },
+          {min:6,max:12,message: '长度在6~12个字符',trigger: "blur"}],
+        captcha: [{ required: true, message: '请输入验证码', trigger: 'blur' },
+          { pattern: /^[0-9]{4}$/, message: '请填写有效的验证码', trigger: 'blur' }],
+        nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' },
+          {min:1,max:30,message: '长度在1~30个字符',trigger: "blur"}]
+      }
+
     }
-  },
-  filters:{
-    filterPrice(price) {
-      return price?('$' + price) : '--'
-    },
-    filterURL (val) {
-      return val ? ('https://baidu.com/' + val) : '#'
-    }
-  },
-  computed:{
-  totalPrice(){
-    let result=0;
-    for(let i=0;i<this.books.length;i++){
-      result+=this.books[i].price;
-    }
-    return result;
-  }
   },
   watch:{
     /**
@@ -85,27 +98,6 @@ export default {
     },
   },
   methods: {
-    clickBtn(){
-      // this.$nextTick(() => {
-      //   console.log('我是父组件')
-      //   this.list.forEach((item, index) => {
-      //     this.$refs.myChild[index].init()
-      //   })
-      // })
-      this.$refs.myChild.init()
-
-    },
-    add() {
-      // 弹出对话框
-      this.$refs.myChild.showDialog()
-    },
-    parentGoods(obj){
-      console.log("parentGoods",obj);
-    },
-    fatherAdd(){
-      console.log('fatherAdd');
-      this.num++;
-    },
     /**
      * 错误提示信息
      */
@@ -206,24 +198,12 @@ export default {
   },
   components: {
     Atest,
-    HelloWorld,
-    son,
-    dialog,
-    Child1
+    HelloWorld
   },
 }
 </script>
 
 <style lang="scss" scoped>
-body {
-  margin: 0;
-}
-.father {
-  height: 100vh;
-  background-color: skyblue;
-  /* 去除 因为h2 造成的塌陷 */
-  overflow: hidden;
-}
 .main-div{
   position: center;
   width: 80%;
